@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8" />
+<title>Zikirmatik</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<style>
+body {
+  font-family: Arial;
+  text-align: center;
+  background: #f3f7ff;
+  padding: 20px;
+}
+h1 {
+  color: #2c3e50;
+}
+.counter {
+  font-size: 60px;
+  margin: 20px 0;
+  color: #2c3e50;
+  font-weight: bold;
+}
+button {
+  font-size: 22px;
+  padding: 15px 25px;
+  margin: 10px;
+  border: none;
+  border-radius: 12px;
+  background: #4a90e2;
+  color: white;
+  font-weight: bold;
+}
+button:active {
+  background: #3b69aa;
+}
+input {
+  padding: 10px;
+  font-size: 20px;
+  width: 150px;
+  margin-top: 10px;
+}
+</style>
+</head>
+
+<body>
+
+<h1>Zikirmatik</h1>
+
+<div class="counter" id="count">0</div>
+
+<button id="plus">+1</button>
+<button id="reset">Sıfırla</button>
+
+<br><br>
+
+<input id="target" type="number" placeholder="Hedef sayı">
+<button id="saveTarget">Hedefi Kaydet</button>
+
+<br><br><br>
+<button id="startVoice">🎤 Sesli Sayma Başlat</button>
+<button id="stopVoice">Durdur</button>
+
+<audio id="ding">
+  <source src="https://actions.google.com/sounds/v1/alarms/alarm_clock.ogg" type="audio/ogg">
+</audio>
+
+<script>
+let count = 0;
+let target = 0;
+
+document.getElementById("plus").onclick = () => {
+  count++;
+  update();
+};
+
+document.getElementById("reset").onclick = () => {
+  count = 0;
+  update();
+};
+
+document.getElementById("saveTarget").onclick = () => {
+  target = Number(document.getElementById("target").value);
+  alert("Hedef kaydedildi: " + target);
+};
+
+function update() {
+  document.getElementById("count").innerText = count;
+
+  if (navigator.vibrate) navigator.vibrate(80);
+
+  if (target > 0 && count >= target) {
+    document.getElementById("ding").play();
+    alert("Hedef tamamlandı!");
+  }
+}
+
+/* --- SESLİ SAYIM (Allah dediğinde +1) --- */
+
+let recognition;
+
+document.getElementById("startVoice").onclick = async () => {
+  try {
+    window.SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+
+    recognition = new SpeechRecognition();
+    recognition.lang = "tr-TR";
+    recognition.continuous = true;
+    recognition.interimResults = false;
+
+    recognition.onresult = (e) => {
+      let last = e.results[e.results.length - 1][0].transcript.toLowerCase();
+
+      if (last.includes("allah")) {
+        count++;
+        update();
+      }
+    };
+
+    recognition.start();
+    alert("Sesli sayma başladı. 'Allah' deyince otomatik sayılacak.");
+  } 
+  catch (err) {
+    alert("Mikrofona izin verin: " + err);
+  }
+};
+
+document.getElementById("stopVoice").onclick = () => {
+  if (recognition) recognition.stop();
+  alert("Sesli sayma durduruldu.");
+};
+</script>
+
+</body>
+</html>

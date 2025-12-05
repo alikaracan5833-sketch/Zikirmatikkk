@@ -1,0 +1,9 @@
+manifest.json
+
+{
+  "name": "Sesli Zikirmatik",
+  "short_name": "Zikir",
+  "start_url": "index.html",
+  "display": "standalone",
+  "background_color": "#ffffff"
+}
