@@ -1,1 +1,48 @@
-<h1>Zikir Matik</h1>
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Zikirmatik</title>
+<style>
+body {
+  font-family: Arial, sans-serif;
+  text-align: center;
+  margin-top: 80px;
+}
+button {
+  padding: 20px 40px;
+  font-size: 22px;
+  margin: 20px;
+  border-radius: 10px;
+}
+#sayi {
+  font-size: 60px;
+  margin-top: 30px;
+  font-weight: bold;
+}
+</style>
+</head>
+<body>
+
+<h1>Zikirmatik</h1>
+
+<div id="sayi">0</div>
+
+<button onclick="artir()">+1</button>
+<button onclick="sifirla()">Sıfırla</button>
+
+<script>
+let sayi = 0;
+function artir() {
+  sayi++;
+  document.getElementById("sayi").innerText = sayi;
+}
+function sifirla() {
+  sayi = 0;
+  document.getElementById("sayi").innerText = sayi;
+}
+</script>
+
+</body>
+</html>
