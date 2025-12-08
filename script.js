@@ -1,83 +1,92 @@
-// Yeni güvenilir sesli sayma akışı:
-// 1) Önce getUserMedia ile mikrofon izni al (tarayıcı izin penceresini kesin çıkarır).
-// 2) Sonra SpeechRecognition başlat.
-
-const statusEl = (() => {
-  let e = document.getElementById('status');
-  if(!e){
-    e = document.createElement('div'); e.id='status';
-    e.style.marginTop='12px'; e.style.fontSize='14px';
-    document.body.insertBefore(e, document.body.firstChild);
-  }
-  return e;
-})();
+// --- Zikirmatik Script.js Tüm Esmalar Dahil ---
 
 let count = 0;
-const countEl = document.getElementById('count');
-const startBtn = document.getElementById('startVoice');
-const stopBtn = document.getElementById('stopVoice');
+let target = 0;
 
+// Esmalar listesi (99 Esma)
+const esmalar = [
+  "Allah", "Er-Rahman", "Er-Rahim", "El-Melik", "El-Kuddus",
+  "Es-Selam", "El-Mümin", "El-Müheymin", "El-Aziz", "El-Cebbar",
+  "El-Mütekebbir", "El-Halik", "El-Bari", "El-Musavvir", "El-Gaffar",
+  "El-Kahhar", "El-Vehhab", "Er-Rezzak", "El-Fettah", "El-Alim",
+  "El-Kabid", "El-Basit", "El-Hafid", "Er-Rafi", "El-Muiz",
+  "El-Muzil", "Es-Semi", "El-Basir", "El-Hakem", "El-Adl",
+  "El-Latif", "El-Habir", "El-Halim", "El-Azim", "El-Gafur",
+  "Eş-Şekur", "El-Ali", "El-Kebir", "El-Hafiz", "El-Mukit",
+  "El-Hasib", "El-Celil", "El-Kerim", "Er-Raqib", "El-Mucib",
+  "El-Vasi", "El-Hakim", "El-Vedud", "El-Mecid", "El-Bais",
+  "Eş-Şehid", "El-Hakk", "El-Vekil", "El-Kavi", "El-Metin",
+  "El-Veliy", "El-Hamid", "El-Muhsi", "El-Mubdi", "El-Muid",
+  "El-Muhyi", "El-Mumit", "El-Hayy", "El-Kayyum", "El-Vahid",
+  "Es-Samed", "El-Kadir", "El-Muktedir", "El-Mukaddim", "El-Muahhir",
+  "El-Evvel", "El-Ahir", "Ez-Zahir", "El-Batin", "El-Vali",
+  "El-Müteali", "El-Berr", "Et-Tevvab", "El-Müntekim", "El-Afüv",
+  "Er-Rauf", "Malikü’l-Mülk", "Zü’l-Celali vel-Ikram", "El-Muksit",
+  "El-Cami", "El-Gani", "El-Muğni", "El-Mani", "Ed-Darr",
+  "En-Nafi", "En-Nur", "El-Hadi", "El-Bedi", "El-Baki",
+  "El-Varıs", "Er-Reşid", "Es-Sabur"
+];
+
+// DOM elementleri
+const counterEl = document.getElementById("count");
+const plusBtn = document.getElementById("plus");
+const resetBtn = document.getElementById("reset");
+const targetInput = document.getElementById("target");
+const saveTargetBtn = document.getElementById("saveTarget");
+const ding = document.getElementById("ding");
+
+// Artırma ve sıfırlama
+plusBtn.onclick = () => { count++; update(); };
+resetBtn.onclick = () => { count = 0; update(); };
+
+// Hedef sayıyı kaydet
+saveTargetBtn.onclick = () => {
+  target = Number(targetInput.value);
+  alert("Hedef kaydedildi: " + target);
+};
+
+// Güncelleme fonksiyonu
 function update() {
-  countEl.innerText = count;
-}
-update();
+  counterEl.innerText = count;
 
-let recognition = null;
-let micStream = null;
+  if (navigator.vibrate) navigator.vibrate(80);
 
-async function ensureMicPermission() {
-  try {
-    // Bu çağrı tarayıcıya mikrofon izni penceresini kesin tetikler
-    micStream = await navigator.mediaDevices.getUserMedia({ audio: true });
-    // mikrofon açık ama kullanmayacağız -> hemen durdur
-    micStream.getTracks().forEach(t => t.stop());
-    statusEl.innerText = 'Mikrofon izni verildi.';
-    return true;
-  } catch (err) {
-    statusEl.innerText = 'Mikrofon izni yok veya hata: ' + (err.message || err);
-    return false;
+  if (target > 0 && count >= target) {
+    ding.play();
+    alert("Hedef tamamlandı!");
   }
 }
 
-startBtn.onclick = async () => {
-  statusEl.innerText = 'İzin isteniyor...';
-  const ok = await ensureMicPermission();
-  if(!ok) return alert('Lütfen tarayıcı mikrofon iznini verin.');
+// --- SESLİ SAYMA ---
+let recognition;
 
-  // SpeechRecognition var mı kontrol et
-  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
-  if(!SR) {
-    statusEl.innerText = 'Tarayıcı SpeechRecognition desteklemiyor (Chrome önerilir).';
-    return alert('Tarayıcınız sesli tanımayı desteklemiyor. Chrome kullanın.');
-  }
-
-  recognition = new SR();
-  recognition.lang = 'tr-TR';
-  recognition.continuous = true;
-  recognition.interimResults = false;
-
-  recognition.onstart = () => statusEl.innerText = 'Sesli sayma başladı — "Allah" deyin.';
-  recognition.onend = () => statusEl.innerText = 'Sesli sayma durdu.';
-  recognition.onerror = (e) => statusEl.innerText = 'Recognition hata: ' + (e.error || e.message);
-
-  recognition.onresult = (e) => {
-    const last = e.results[e.results.length - 1][0].transcript.toLowerCase();
-    // kelime eşleşmesini ihtiyaç halinde genişlet
-    if(last.includes('allah')) {
-      count++; update();
-      // hedef kontrol varsa çalıştır
-      try { checkTarget && checkTarget(); } catch(_) {}
-    }
-  };
-
+document.getElementById("startVoice").onclick = async () => {
   try {
+    window.SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    recognition = new SpeechRecognition();
+    recognition.lang = "tr-TR";
+    recognition.continuous = true;
+    recognition.interimResults = false;
+
+    recognition.onresult = (e) => {
+      let last = e.results[e.results.length - 1][0].transcript.toLowerCase();
+      for (let esma of esmalar) {
+        if (last.includes(esma.toLowerCase())) {
+          count++;
+          update();
+          break;
+        }
+      }
+    };
+
     recognition.start();
-  } catch(err) {
-    statusEl.innerText = 'Başlatma hatası: ' + (err.message || err);
+    alert("Sesli sayma başladı. Esmaları söylediğinizde otomatik sayılacak.");
+  } catch (err) {
+    alert("Mikrofona izin verin: " + err);
   }
 };
 
-stopBtn.onclick = () => {
-  if(recognition) recognition.stop();
-  statusEl.innerText = 'Sesli sayma durduruldu (kullanıcı durdurdu).';
+document.getElementById("stopVoice").onclick = () => {
+  if (recognition) recognition.stop();
+  alert("Sesli sayma durduruldu.");
 };
