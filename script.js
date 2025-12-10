@@ -1,6 +1,9 @@
 let count = 0;
 let target = 0;
 
+const tick = document.getElementById("tick");      // tok tespih sesi
+const finish = document.getElementById("finish");  // ding-dong bitiş sesi
+
 document.getElementById("plus").onclick = () => {
   count++;
   update();
@@ -19,17 +22,29 @@ document.getElementById("saveTarget").onclick = () => {
 function update() {
   document.getElementById("count").innerText = count;
 
-  // Daha hızlı titreşim (çok kısa)
-  if (navigator.vibrate) navigator.vibrate(40);
+  // Her sayımda ORTA seviye titreşim
+  if (navigator.vibrate) navigator.vibrate(50);
 
+  // Her sayımda tok tespih sesi
+  tick.currentTime = 0;
+  tick.play();
+
+  // Hedef tamamlandıysa
   if (target > 0 && count >= target) {
-    document.getElementById("ding").play();
+    // güçlü titreşim
+    if (navigator.vibrate) navigator.vibrate([200, 100, 200]);
+
+    // ding-dong sesi
+    finish.currentTime = 0;
+    finish.play();
+
     alert("Hedef tamamlandı!");
   }
 }
 
-// --- SES TANIMA ---
+// Sesli sayma
 let recognition;
+
 document.getElementById("startVoice").onclick = async () => {
   try {
     window.SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
@@ -37,18 +52,19 @@ document.getElementById("startVoice").onclick = async () => {
     recognition.lang = "tr-TR";
     recognition.continuous = true;
     recognition.interimResults = false;
+
     recognition.onresult = (e) => {
       let last = e.results[e.results.length - 1][0].transcript.toLowerCase();
-      // Sadece ALLAH dediğinde +1
       if (last.includes("allah")) {
         count++;
         update();
       }
     };
+
     recognition.start();
-    alert("Sesli sayma başlatıldı.");
+    alert("Sesli sayma başladı. 'Allah' deyince otomatik sayılacak.");
   } catch (err) {
-    alert("Mikrofon izni gerekli: " + err);
+    alert("Mikrofona izin verin: " + err);
   }
 };
 
@@ -56,4 +72,3 @@ document.getElementById("stopVoice").onclick = () => {
   if (recognition) recognition.stop();
   alert("Sesli sayma durduruldu.");
 };
-
